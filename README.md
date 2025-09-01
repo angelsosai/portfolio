@@ -10,5 +10,5 @@ A collection of my data science projects, including data analysis, machine learn
 - dijkstra
 
 ### leetcode-exercises:
-- 1792. Maximum Average Pass Ratio (Medium)
+- 1792 Maximum Average Pass Ratio (Medium)
   
