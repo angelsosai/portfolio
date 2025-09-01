@@ -1,0 +1,11 @@
+git config user.email "angelsosa@ciencias.unam.mx"
+git config --global user.name "angelsosai"
+
+git branch angel
+git checkout angel
+
+git add .
+git commit -m "Ejercicio leetcode"
+git push
+
+git push --set-upstream origin angel
