@@ -1,0 +1,5 @@
+git config user.email "angelsosa@ciencias.unam.mx"
+git config --global user.name "angelsosai"
+
+git branch angel
+git checkout angel
