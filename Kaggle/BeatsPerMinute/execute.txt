@@ -1,0 +1,11 @@
+cd \Users\angel\OneDrive\Documentos\portfolio\Kaggle\BeatsPerMinute
+# 1) Crear y activar entorno, instalar requirements
+pip install -r requirements.txt
+
+# 2) Poner train.csv y test.csv en data/raw/
+
+# 3) Entrenar y guardar modelo
+python main.py train
+
+# 4) Predecir sobre test.csv -> data/submissions/submission.csv
+python main.py predict
