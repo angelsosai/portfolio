@@ -6,7 +6,7 @@
 import warnings
 from abc import ABC, abstractmethod
 from numbers import Integral, Real
-
+import matplotlib.pyplot as plt
 import numpy as np
 import scipy.sparse as sp
 
@@ -442,6 +442,7 @@ def k_means(
     >>> inertia
     16.0
     """
+    print(algorithm)
     est = KMeans(
         n_clusters=n_clusters,
         init=init,
@@ -581,7 +582,7 @@ def _kmeans_single_elkan(
             print(f"Iteration {i}, inertia {inertia}")
 
         centers, centers_new = centers_new, centers
-
+        print(f"Iteration {i}, centers: {centers}",labels,labels_old,centers_new)
         if np.array_equal(labels, labels_old):
             # First check the labels for strict convergence.
             if verbose:
@@ -719,7 +720,15 @@ def _kmeans_single_lloyd(
             print(f"Iteration {i}, inertia {inertia}.")
 
         centers, centers_new = centers_new, centers
-
+        # print(f"Iteration {i}, centers: {centers}",labels,labels_old,centers_new)
+        print("Centros ",centers)
+        plt.figure()
+        plt.scatter(X[:, 0], X[:, 1], c=labels, s=30)                 # puntos coloreados por label
+        plt.scatter(centers[:, 0], centers[:, 1], c="black", s=250, marker="X")  # centroides negros
+        plt.title("Puntos (por label) + Centroides (negro)")
+        plt.xlabel("x1")
+        plt.ylabel("x2")
+        plt.show()
         if np.array_equal(labels, labels_old):
             # First check the labels for strict convergence.
             if verbose:
@@ -1499,7 +1508,7 @@ class KMeans(_BaseKMeans):
             self._check_mkl_vcomp(X, X.shape[0])
 
         best_inertia, best_labels = None, None
-
+        
         for i in range(self._n_init):
             # Initialize centers
             centers_init = self._init_centroids(
@@ -1511,7 +1520,7 @@ class KMeans(_BaseKMeans):
             )
             if self.verbose:
                 print("Initialization complete")
-
+            print("inicia",centers_init)
             # run a k-means once
             labels, inertia, centers, n_iter_ = kmeans_single(
                 X,
@@ -1522,6 +1531,7 @@ class KMeans(_BaseKMeans):
                 tol=self._tol,
                 n_threads=self._n_threads,
             )
+            print("ultimo",labels, inertia, centers, n_iter_)
 
             # determine if these results are the best so far
             # we chose a new run if it has a better inertia and the clustering is
@@ -1876,8 +1886,8 @@ class MiniBatchKMeans(_BaseKMeans):
     ...                          max_iter=10,
     ...                          n_init="auto").fit(X)
     >>> kmeans.cluster_centers_
-    array([[3.55102041, 2.48979592],
-           [1.06896552, 1.        ]])
+    array([[3.20967742, 3.56451613],
+           [1.32758621, 0.77586207]])
     >>> kmeans.predict([[0, 0], [4, 4]])
     array([1, 0], dtype=int32)
 
@@ -2153,18 +2163,32 @@ class MiniBatchKMeans(_BaseKMeans):
         # Initialize number of samples seen since last reassignment
         self._n_since_last_reassign = 0
 
+        sum_of_weights = np.sum(sample_weight)
+
         n_steps = (self.max_iter * n_samples) // self._batch_size
+        normalized_sample_weight = sample_weight / sum_of_weights
+        unit_sample_weight = np.ones_like(sample_weight, shape=(self._batch_size,))
 
         with _get_threadpool_controller().limit(limits=1, user_api="blas"):
             # Perform the iterative optimization until convergence
             for i in range(n_steps):
                 # Sample a minibatch from the full dataset
-                minibatch_indices = random_state.randint(0, n_samples, self._batch_size)
-
+                minibatch_indices = random_state.choice(
+                    n_samples,
+                    self._batch_size,
+                    p=normalized_sample_weight,
+                    replace=True,
+                )
                 # Perform the actual update step on the minibatch data
+                # Note: since the sampling of the minibatch is sample_weight aware,
+                # we pass fixed unit weights to the `_mini_batch_step` call to avoid
+                # accounting for the weights twice. Also note that `_mini_batch_step`
+                # can be called with non-unit weights when the caller constructs
+                # the batches explicitly by calling the public `partial_fit` method
+                # instead.
                 batch_inertia = _mini_batch_step(
                     X=X[minibatch_indices],
-                    sample_weight=sample_weight[minibatch_indices],
+                    sample_weight=unit_sample_weight,
                     centers=centers,
                     centers_new=centers_new,
                     weight_sums=self._counts,
@@ -2202,7 +2226,7 @@ class MiniBatchKMeans(_BaseKMeans):
                 n_threads=self._n_threads,
             )
         else:
-            self.inertia_ = self._ewa_inertia * n_samples
+            self.inertia_ = self._ewa_inertia * sum_of_weights
 
         return self
 
