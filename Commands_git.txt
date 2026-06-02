@@ -5,10 +5,12 @@ git branch angel
 git checkout angel
 
 git add .
-git commit -m "Ejercicio leetcode"
+git commit -m "Ejercicios leetcode 1"
 git push
 git merge angel
 
 git push origin master
 
 git push --set-upstream origin angel
+
+git clone https://github.com/angelsosai/scikit-learn_experiment.git
